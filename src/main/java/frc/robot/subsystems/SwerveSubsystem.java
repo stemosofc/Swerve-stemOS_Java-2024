@@ -49,6 +49,8 @@ public class SwerveSubsystem extends SubsystemBase {
         } catch (Exception e) {
           throw new RuntimeException(e);
         }
+        swerveDrive.setHeadingCorrection(true);
+        setupPathPlanner();
     }
     
     @Override
