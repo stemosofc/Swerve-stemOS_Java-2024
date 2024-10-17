@@ -30,28 +30,11 @@ public class RobotContainer {
   public RobotContainer() {
 
     // Definimos o comando padrão como a tração
-    swerve.setDefaultCommand(new Teleop(swerve, 
-    // Aqui dentro temos vários inputs do nossos gamepad, estaremos passando a própria função pelo método,
-    // apenas preferência de sintaxe, o desempenho em si não se altera
-        () -> -MathUtil.applyDeadband(controleXbox.getLeftY(), Controle.DEADBAND), 
-        () -> -MathUtil.applyDeadband(controleXbox.getLeftX(), Controle.DEADBAND), 
-        () ->  MathUtil.applyDeadband(controleXbox.getRightX(), Controle.DEADBAND))
-      );
-    
-    
-    /* AbsoluteDriveAdv closedAbsoluteDriveAdv = new AbsoluteDriveAdv(drivebase,
-                                                 () -> MathUtil.applyDeadband(driverXbox.getLeftX(),
-                                                                             Controle.DEADBAND),
-                                                  () -> -MathUtil.applyDeadband(driverXbox.getLeftY(),
-                                                                              Controle.DEADBAND),
-                                                  () -> MathUtil.applyDeadband(driverXbox.getRightX(),
-                                                                              Controle.DEADBAND), 
-                                                  driverXbox::getYButtonPressed, 
-                                                  driverXbox::getAButtonPressed, 
-                                                  driverXbox::getXButtonPressed, 
-                                                  driverXbox::getBButtonPressed);
-    */
-
+    swerve.setDefaultCommand(swerve.driveCommand(
+      () -> MathUtil.applyDeadband(controleXbox.getLeftY(), Constants.Controle.DEADBAND),
+      () -> MathUtil.applyDeadband(controleXbox.getLeftX(), Constants.Controle.DEADBAND),
+      () -> controleXbox.getRightX(),
+      () -> controleXbox.getRightY()));
     // Colocar os comandos definidos no PathPlanner 2024 da seguinte forma 
     NamedCommands.registerCommand("Intake", new PrintCommand("Intake"));
 

@@ -5,15 +5,22 @@
 package frc.robot.subsystems;
 
 import java.io.File;
+import java.util.function.DoubleSupplier;
 
+import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
+import com.pathplanner.lib.util.PIDConstants;
+import com.pathplanner.lib.util.ReplanningConfig;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 import frc.robot.Constants.Dimensoes;
 import frc.robot.Constants.Tracao;
 import frc.robot.commands.Auto.ConfigAuto;
@@ -31,9 +38,6 @@ public class SwerveSubsystem extends SubsystemBase {
     // Objeto global da SwerveDrive (Classe YAGSL)
     SwerveDrive swerveDrive;
 
-    // Objeto global autônomo
-    ConfigAuto autonomo;
-
     // Método construtor da classe
     public SwerveSubsystem(File directory) {
         // Seta a telemetria como nível mais alto
@@ -42,16 +46,13 @@ public class SwerveSubsystem extends SubsystemBase {
         // Acessa os arquivos do diretório .JSON
         try {
           
-        swerveDrive = new SwerveParser(directory).createSwerveDrive(Tracao.MAX_SPEED, 
-        Dimensoes.angleConversion, Dimensoes.driveConversion);
+        swerveDrive = new SwerveParser(directory).createSwerveDrive(Constants.Tracao.MAX_SPEED);
        
         } catch (Exception e) {
           throw new RuntimeException(e);
         }
 
-        autonomo = new ConfigAuto(this);
-        
-        autonomo.setupPathPlanner();
+        setupPathPlanner();
     }
     
     @Override
@@ -60,11 +61,93 @@ public class SwerveSubsystem extends SubsystemBase {
       swerveDrive.updateOdometry();
     }
 
+    public void setupPathPlanner()
+    {
+        AutoBuilder.configureHolonomic(
+            this::getPose, // Robot pose supplier
+            this::resetOdometry, // Method to reset odometry (will be called if your auto has a starting pose)
+            this::getRobotVelocity, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+            this::setChassisSpeeds, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
+            new HolonomicPathFollowerConfig( // HolonomicPathFollowerConfig, this should likely live in your Constants class
+                                         new PIDConstants(5.0, 0.0, 0.0),
+                                         // Translation PID constants
+                                         new PIDConstants(swerveDrive.getSwerveController().config.headingPIDF.p,
+                                                          swerveDrive.getSwerveController().config.headingPIDF.i,
+                                                          swerveDrive.getSwerveController().config.headingPIDF.d),
+                                         // Rotation PID constants
+                                         4.5,
+                                         // Max module speed, in m/s
+                                         swerveDrive.swerveDriveConfiguration.getDriveBaseRadiusMeters(),
+                                         // Drive base radius in meters. Distance from robot center to furthest module.
+                                         new ReplanningConfig()
+                                         // Default path replanning config. See the API for the options here
+            ),
+            () -> {
+                    // Boolean supplier that controls when the path will be mirrored for the red alliance
+                    // This will flip the path being followed to the red side of the field.
+                    // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+                    var alliance = DriverStation.getAlliance();
+                    return alliance.isPresent() ? alliance.get() == DriverStation.Alliance.Red : false;
+                },
+            this // Reference to this subsystem to set requirements
+                                  );
+    }
+
+    /**
+   * Command to drive the robot using translative values and heading as a setpoint.
+   *
+   * @param translationX Translation in the X direction.
+   * @param translationY Translation in the Y direction.
+   * @param headingX     Heading X to calculate angle of the joystick.
+   * @param headingY     Heading Y to calculate angle of the joystick.
+   * @return Drive command.
+   */
+  public Command driveCommand(DoubleSupplier translationX, DoubleSupplier translationY, DoubleSupplier headingX,
+                              DoubleSupplier headingY)
+  {
+    return run(() -> {
+      double xInput = Math.pow(translationX.getAsDouble(), 3); // Smooth controll out
+      double yInput = Math.pow(translationY.getAsDouble(), 3); // Smooth controll out
+      // Make the robot move
+      driveFieldOriented(swerveDrive.swerveController.getTargetSpeeds(xInput, yInput,
+                                                                      headingX.getAsDouble(),
+                                                                      headingY.getAsDouble(),
+                                                                      swerveDrive.getYaw().getRadians(),
+                                                                      swerveDrive.getMaximumVelocity()));
+    });
+  }
+
+  /**
+   * Command to drive the robot using translative values and heading as angular velocity.
+   *
+   * @param translationX     Translation in the X direction.
+   * @param translationY     Translation in the Y direction.
+   * @param angularRotationX Rotation of the robot to set
+   * @return Drive command.
+   */
+  public Command driveCommand(DoubleSupplier translationX, DoubleSupplier translationY, DoubleSupplier angularRotationX)
+  {
+    return run(() -> {
+      // Make the robot move
+      swerveDrive.drive(new Translation2d(translationX.getAsDouble() * swerveDrive.getMaximumVelocity(),
+                                          translationY.getAsDouble() * swerveDrive.getMaximumVelocity()),
+                        angularRotationX.getAsDouble() * swerveDrive.getMaximumAngularVelocity(),
+                        true,
+                        false);
+    });
+  }
+
     // Função drive que chamamos em nossa classe de comando Teleoperado
     public void drive(Translation2d translation, double rotation, boolean fieldRelative) 
     {
         swerveDrive.drive(translation, rotation, fieldRelative, false);
     }
+
+  // FUn
+  public void driveFieldOriented(ChassisSpeeds velocity)
+  {
+    swerveDrive.driveFieldOriented(velocity);
+  }
 
     // Função para obter a velocidade desejada a partir dos inputs do gamepad
     public ChassisSpeeds getTargetSpeeds(double xInput, double yInput, double headingX, double headingY)
