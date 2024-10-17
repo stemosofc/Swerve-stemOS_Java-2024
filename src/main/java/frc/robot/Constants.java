@@ -84,7 +84,7 @@ public final class Constants {
       public static final double TURN_CONSTANT = 0.75;
 
       // constante que define a velocidade máxima
-      public static final double MAX_SPEED = Units.feetToMeters(14.5);;
+      public static final double MAX_SPEED = 4.4;
 
       public static final double dt = 0.02;
 

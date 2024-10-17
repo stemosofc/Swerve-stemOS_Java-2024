@@ -45,14 +45,10 @@ public class SwerveSubsystem extends SubsystemBase {
 
         // Acessa os arquivos do diretório .JSON
         try {
-          
-        swerveDrive = new SwerveParser(directory).createSwerveDrive(Constants.Tracao.MAX_SPEED);
-       
+        swerveDrive = new SwerveParser(directory).createSwerveDrive(4);
         } catch (Exception e) {
           throw new RuntimeException(e);
         }
-
-        setupPathPlanner();
     }
     
     @Override
@@ -137,26 +133,26 @@ public class SwerveSubsystem extends SubsystemBase {
     });
   }
 
-    // Função drive que chamamos em nossa classe de comando Teleoperado
-    public void drive(Translation2d translation, double rotation, boolean fieldRelative) 
-    {
-        swerveDrive.drive(translation, rotation, fieldRelative, false);
-    }
-
-  // FUn
-  public void driveFieldOriented(ChassisSpeeds velocity)
+    public void driveFieldOriented(ChassisSpeeds velocity)
   {
     swerveDrive.driveFieldOriented(velocity);
   }
 
-    // Função para obter a velocidade desejada a partir dos inputs do gamepad
-    public ChassisSpeeds getTargetSpeeds(double xInput, double yInput, double headingX, double headingY)
-  {
-    return swerveDrive.swerveController.getTargetSpeeds(xInput, yInput, headingX, headingY, 
-    getHeading().getRadians());
-  }
+    // Função drive que chamamos em nossa classe de comando Teleoperado
+  public void drive(Translation2d translation, double rotation, boolean fieldRelative) 
+    {
+      swerveDrive.drive(translation, rotation, fieldRelative, false);
+    }
 
-  public ChassisSpeeds getTargetSpeeds(double xInput, double yInput) {
+    // Função para obter a velocidade desejada a partir dos inputs do gamepad
+  public ChassisSpeeds getTargetSpeeds(double xInput, double yInput, double headingX, double headingY)
+    {
+      return swerveDrive.swerveController.getTargetSpeeds(xInput, yInput, headingX, headingY, 
+      getHeading().getRadians());
+    }
+
+  public ChassisSpeeds getTargetSpeeds(double xInput, double yInput) 
+  {
     return swerveDrive.swerveController.getTargetSpeeds(xInput, yInput, 0, 0, 0, Tracao.MAX_SPEED);
   }
 
@@ -207,18 +203,6 @@ public class SwerveSubsystem extends SubsystemBase {
   {
     return swerveDrive.getRobotVelocity();
   }
-
-  public ChassisSpeeds discretize(ChassisSpeeds speeds) {
-    var desiredDeltaPose = new Pose2d(
-      speeds.vxMetersPerSecond * Tracao.dt, 
-      speeds.vyMetersPerSecond * Tracao.dt, 
-      new Rotation2d(speeds.omegaRadiansPerSecond * Tracao.dt * Tracao.constantRotation)
-    );
-    var twist = new Pose2d().log(desiredDeltaPose);
-
-    return new ChassisSpeeds((twist.dx / Tracao.dt), (twist.dy / Tracao.dt), (speeds.omegaRadiansPerSecond));
-  }
-
 
     public Command getAutonomousCommand(String pathName, boolean setOdomToStart)
   {
