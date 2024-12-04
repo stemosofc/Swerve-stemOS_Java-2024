@@ -17,15 +17,14 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants;
-import frc.robot.Constants.Dimensoes;
 import frc.robot.Constants.Tracao;
-import frc.robot.commands.Auto.ConfigAuto;
 import swervelib.SwerveController;
 import swervelib.SwerveDrive;
+import swervelib.math.SwerveMath;
 import swervelib.telemetry.SwerveDriveTelemetry;
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 import swervelib.parser.SwerveDriveConfiguration;
@@ -69,9 +68,7 @@ public class SwerveSubsystem extends SubsystemBase {
             new HolonomicPathFollowerConfig( // HolonomicPathFollowerConfig, this should likely live in your Constants class
                                          new PIDConstants(5.0, 0.0, 0.0),
                                          // Translation PID constants
-                                         new PIDConstants(swerveDrive.getSwerveController().config.headingPIDF.p,
-                                                          swerveDrive.getSwerveController().config.headingPIDF.i,
-                                                          swerveDrive.getSwerveController().config.headingPIDF.d),
+                                         new PIDConstants(5, 0, 0),
                                          // Rotation PID constants
                                          4.5,
                                          // Max module speed, in m/s
@@ -91,22 +88,14 @@ public class SwerveSubsystem extends SubsystemBase {
                                   );
     }
 
-    /**
-   * Command to drive the robot using translative values and heading as a setpoint.
-   *
-   * @param translationX Translation in the X direction.
-   * @param translationY Translation in the Y direction.
-   * @param headingX     Heading X to calculate angle of the joystick.
-   * @param headingY     Heading Y to calculate angle of the joystick.
-   * @return Drive command.
-   */
+  //Movimenta o robô com o joystick esquerdo, e mira o robo no ângulo no qual o joystick está apontando
   public Command driveCommand(DoubleSupplier translationX, DoubleSupplier translationY, DoubleSupplier headingX,
                               DoubleSupplier headingY)
   {
     return run(() -> {
-      double xInput = Math.pow(translationX.getAsDouble(), 3); // Smooth controll out
-      double yInput = Math.pow(translationY.getAsDouble(), 3); // Smooth controll out
-      // Make the robot move
+      double xInput = Math.pow(translationX.getAsDouble(), 3); 
+      double yInput = Math.pow(translationY.getAsDouble(), 3); 
+      // Faz o robô se mover
       driveFieldOriented(swerveDrive.swerveController.getTargetSpeeds(xInput, yInput,
                                                                       headingX.getAsDouble(),
                                                                       headingY.getAsDouble(),
@@ -115,20 +104,15 @@ public class SwerveSubsystem extends SubsystemBase {
     });
   }
 
-  /**
-   * Command to drive the robot using translative values and heading as angular velocity.
-   *
-   * @param translationX     Translation in the X direction.
-   * @param translationY     Translation in the Y direction.
-   * @param angularRotationX Rotation of the robot to set
-   * @return Drive command.
-   */
+  //Movimenta o robô com o joystick esquerdo, e gira o robô na intensidade na qual o joystick direito está para o lado
   public Command driveCommand(DoubleSupplier translationX, DoubleSupplier translationY, DoubleSupplier angularRotationX)
   {
     return run(() -> {
-      // Make the robot move
-      swerveDrive.drive(new Translation2d(translationX.getAsDouble() * swerveDrive.getMaximumVelocity(),
-                                          translationY.getAsDouble() * swerveDrive.getMaximumVelocity()),
+      double xInput = Math.pow(translationX.getAsDouble(), 3); 
+      double yInput = Math.pow(translationY.getAsDouble(), 3); 
+      // Faz o robô se mover
+      swerveDrive.drive(new Translation2d(xInput * swerveDrive.getMaximumVelocity(),
+                                          yInput * swerveDrive.getMaximumVelocity()),
                         angularRotationX.getAsDouble() * swerveDrive.getMaximumAngularVelocity(),
                         true,
                         false);

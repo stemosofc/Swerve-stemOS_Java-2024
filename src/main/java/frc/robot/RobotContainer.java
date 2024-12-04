@@ -26,16 +26,14 @@ public class RobotContainer {
   // Controle de Xbox, troque para o qual sua equipe estará utilizando
   private XboxController controleXbox = new XboxController(Controle.xboxControle);
 
-  /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
 
     // Definimos o comando padrão como a tração
     swerve.setDefaultCommand(swerve.driveCommand(
       () -> MathUtil.applyDeadband(controleXbox.getLeftY(), Constants.Controle.DEADBAND),
       () -> MathUtil.applyDeadband(controleXbox.getLeftX(), Constants.Controle.DEADBAND),
-      () -> controleXbox.getRightX(),
-      () -> controleXbox.getRightY()));
-    // Colocar os comandos definidos no PathPlanner 2024 da seguinte forma 
+      () -> controleXbox.getRightX()));
+
     NamedCommands.registerCommand("Intake", new PrintCommand("Intake"));
 
     // Configure the trigger bindings
