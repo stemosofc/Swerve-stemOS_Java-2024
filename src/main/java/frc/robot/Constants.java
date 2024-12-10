@@ -21,31 +21,16 @@ public final class Constants {
     public static final double LOOP_TIME = 0.13;
     // Massa do robô
     public static final double ROBOT_MASS = 38;
+    //Velocidade máxima
+    public static final double MAX_SPEED = 4;
 
     //Posições do centro de massa
     private static final double xMass = 0;
     private static final double yMass = 0;
     private static final double zMass = .08;
+
     // Centro de massa do chassi
     public static final Matter CHASSIS    = new Matter(new Translation3d(xMass, yMass, (zMass)), ROBOT_MASS);
-
-    // Máxima aceleração e velocidade
-    public static final double MAX_ACCE_AUTO = 4;
-    public static final double MAX_VEL_AUTO  = 4;
-
-    // Diâmetro da roda do módulo
-    public static final double wheelDiameterInMeters = Units.inchesToMeters(4);
-    
-    // Redução para motor de acionamento e ângulo
-    public static final double driveGearRatio = 6.18;
-    public static final double angleGearRatio = 21.42;
-
-    // PPR do encoder interno NEO;
-    public static final  double pulsePerRotation = 1;
-
-    // Fatores de conversão para motores de acionamento e ângulo
-    public static final  double driveConversion = SwerveMath.calculateMetersPerRotation(wheelDiameterInMeters, driveGearRatio, pulsePerRotation);
-    public static final  double angleConversion = SwerveMath.calculateDegreesPerSteeringRotation(angleGearRatio, pulsePerRotation);
    }
 
     // Classe que contém os PID para o autônomo
